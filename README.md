@@ -1,34 +1,78 @@
 [![progress-banner](https://backend.codecrafters.io/progress/claude-code/0388b3ae-654e-4af5-bdb4-a35000aa6b33)](https://app.codecrafters.io/users/RudraSharma3?r=2qF)
 
-This is a starting point for Python solutions to the
-["Build Your own Claude Code" Challenge](https://codecrafters.io/challenges/claude-code).
+# Build Your Own Claude Code (Python)
 
-Claude Code is an AI coding assistant that uses Large Language Models (LLMs) to
-understand code and perform actions through tool calls. In this challenge,
-you'll build your own Claude Code from scratch by implementing an LLM-powered
-coding assistant.
+A lightweight, LLM-powered autonomous coding assistant built in Python from scratch, based on the [CodeCrafters "Build Your Own Claude Code" Challenge](https://codecrafters.io/challenges/claude-code).
 
-Along the way you'll learn about HTTP RESTful APIs, OpenAI-compatible tool
-calling, agent loop, and how to integrate multiple tools into an AI assistant.
+## 🚀 Overview
 
-**Note**: If you're viewing this repo on GitHub, head over to
-[codecrafters.io](https://codecrafters.io) to try the challenge.
+This assistant implements an autonomous **agent loop** using OpenAI-compatible APIs (OpenRouter / Anthropic Claude 3.5/4.5 Haiku) capable of:
+- Inspecting codebases and reading local files
+- Writing and updating source files (with automatic parent directory creation)
+- Executing bash/shell commands and capturing stdout/stderr
+- Iteratively solving multi-step tasks until completion
 
-# Passing the first stage
+---
 
-The entry point for your `claude-code` implementation is in `app/main.py`. Study
-and uncomment the relevant code, and submit to pass the first stage:
+## 🛠️ Architecture
 
-```sh
-codecrafters submit
+The codebase is organized into clean, decoupled modules:
+
+```text
+├── app/
+│   ├── __init__.py       # Package marker
+│   ├── agent.py          # ClaudeCodeAgent (Agent loop & conversation manager)
+│   ├── tools.py          # Tool schemas (Read, Write, Bash) & execution handlers
+│   └── main.py           # CLI entry point
+├── your_program.sh       # Local runner script
+├── pyproject.toml        # Project configuration and dependencies
+└── README.md
 ```
 
-# Stage 2 & beyond
+### Key Components
 
-Note: This section is for stages 2 and beyond.
+- **`ClaudeCodeAgent` (`app/agent.py`)**: Manages the conversation state (`messages`), queries the LLM with tool schemas, catches tool calls, dispatches tool execution, feeds results back as `tool` messages, and prints the final output once the assistant finishes.
+- **Tools (`app/tools.py`)**:
+  - `Read`: Reads and returns the contents of any file at `file_path`.
+  - `Write`: Writes `content` to `file_path` with directory creation.
+  - `Bash`: Runs shell commands via `subprocess` and captures output.
 
-1. Ensure you have `uv` installed locally.
-2. Run `./your_program.sh` to run your program, which is implemented in
-   `app/main.py`.
-3. Run `codecrafters submit` to submit your solution to CodeCrafters. Test
-   output will be streamed to your terminal.
+---
+
+## ⚡ Getting Started
+
+### Prerequisites
+
+- Python `>=3.14`
+- [`uv`](https://github.com/astral-sh/uv) package manager
+- OpenRouter API Key
+
+### Environment Variables
+
+Set your OpenRouter API key:
+
+```bash
+export OPENROUTER_API_KEY="your-openrouter-api-key"
+```
+
+### Running Locally
+
+Execute prompts directly using `uv` or the runner script:
+
+```bash
+# Using your_program.sh
+./your_program.sh -p "Read README.md and summarize it in 2 bullet points."
+
+# Or directly with uv
+uv run python -m app.main -p "List all files in the current directory and explain their purpose."
+```
+
+---
+
+## 🧪 Testing
+
+Submit and test with the CodeCrafters CLI:
+
+```bash
+codecrafters submit
+```
