@@ -36,7 +36,28 @@ def main():
                     "required": ["file_path"],
                 },
             },
-        }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "Write",
+                "description": "Write content to a file",
+                "parameters": {
+                    "type": "object",
+                    "required": ["file_path", "content"],
+                    "properties": {
+                        "file_path": {
+                            "type": "string",
+                            "description": "The path of the file to write to",
+                        },
+                        "content": {
+                            "type": "string",
+                            "description": "The content to write to the file",
+                        },
+                    },
+                },
+            },
+        },
     ]
 
     messages = [{"role": "user", "content": args.p}]
@@ -68,6 +89,26 @@ def main():
                         content = f.read()
                 except Exception as e:
                     content = f"Error reading file: {e}"
+                messages.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": tool_call.id,
+                        "content": content,
+                    }
+                )
+            elif tool_call.function.name == "Write":
+                tool_args = json.loads(tool_call.function.arguments)
+                file_path = tool_args.get("file_path")
+                file_content = tool_args.get("content", "")
+                try:
+                    parent_dir = os.path.dirname(file_path)
+                    if parent_dir:
+                        os.makedirs(parent_dir, exist_ok=True)
+                    with open(file_path, "w", encoding="utf-8") as f:
+                        f.write(file_content)
+                    content = "File written successfully"
+                except Exception as e:
+                    content = f"Error writing file: {e}"
                 messages.append(
                     {
                         "role": "tool",
