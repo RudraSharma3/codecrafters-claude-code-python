@@ -39,29 +39,42 @@ def main():
         }
     ]
 
-    chat = client.chat.completions.create(
-        model="anthropic/claude-haiku-4.5",
-        messages=[{"role": "user", "content": args.p}],
-        tools=tools,
-    )
+    messages = [{"role": "user", "content": args.p}]
 
-    if not chat.choices or len(chat.choices) == 0:
-        raise RuntimeError("no choices in response")
+    while True:
+        chat = client.chat.completions.create(
+            model="anthropic/claude-haiku-4.5",
+            messages=messages,
+            tools=tools,
+        )
 
-    # You can use print statements as follows for debugging, they'll be visible when running tests.
-    print("Logs from your program will appear here!", file=sys.stderr)
+        if not chat.choices or len(chat.choices) == 0:
+            raise RuntimeError("no choices in response")
 
-    message = chat.choices[0].message
-    if message.tool_calls:
-        tool_call = message.tool_calls[0]
-        if tool_call.function.name == "Read":
-            tool_args = json.loads(tool_call.function.arguments)
-            file_path = tool_args.get("file_path")
-            with open(file_path, "r", encoding="utf-8") as f:
-                content = f.read()
-            print(content, end="")
-    else:
-        print(message.content)
+        message = chat.choices[0].message
+        messages.append(message)
+
+        if not message.tool_calls:
+            if message.content:
+                print(message.content)
+            break
+
+        for tool_call in message.tool_calls:
+            if tool_call.function.name == "Read":
+                tool_args = json.loads(tool_call.function.arguments)
+                file_path = tool_args.get("file_path")
+                try:
+                    with open(file_path, "r", encoding="utf-8") as f:
+                        content = f.read()
+                except Exception as e:
+                    content = f"Error reading file: {e}"
+                messages.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": tool_call.id,
+                        "content": content,
+                    }
+                )
 
 
 if __name__ == "__main__":
