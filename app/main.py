@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import subprocess
 import sys
 
 from openai import OpenAI
@@ -58,6 +59,23 @@ def main():
                 },
             },
         },
+        {
+            "type": "function",
+            "function": {
+                "name": "Bash",
+                "description": "Execute a shell command",
+                "parameters": {
+                    "type": "object",
+                    "required": ["command"],
+                    "properties": {
+                        "command": {
+                            "type": "string",
+                            "description": "The command to execute",
+                        },
+                    },
+                },
+            },
+        },
     ]
 
     messages = [{"role": "user", "content": args.p}]
@@ -109,6 +127,23 @@ def main():
                     content = "File written successfully"
                 except Exception as e:
                     content = f"Error writing file: {e}"
+                messages.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": tool_call.id,
+                        "content": content,
+                    }
+                )
+            elif tool_call.function.name == "Bash":
+                tool_args = json.loads(tool_call.function.arguments)
+                command = tool_args.get("command", "")
+                try:
+                    proc = subprocess.run(
+                        command, shell=True, capture_output=True, text=True
+                    )
+                    content = proc.stdout + proc.stderr
+                except Exception as e:
+                    content = f"Error executing command: {e}"
                 messages.append(
                     {
                         "role": "tool",
